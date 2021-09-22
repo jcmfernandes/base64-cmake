@@ -162,6 +162,7 @@ target_compile_options(base64 PRIVATE
     -Wall
     -Wextra
     -Wpedantic
+    -O3
   >
 )
 
