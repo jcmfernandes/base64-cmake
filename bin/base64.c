@@ -16,13 +16,15 @@ enc (FILE *fp)
 {
 	int ret = 1;
 	struct base64_state state;
+    size_t acc = 0;
 
 	base64_stream_encode_init(&state, 0);
 
 	while ((nread = fread(buf, 1, BUFSIZE, fp)) > 0) {
-		base64_stream_encode(&state, buf, nread, out, &nout);
+		base64_stream_encode(&state, buf, nread, out + acc, &nout);
 		if (nout) {
-			fwrite(out, nout, 1, stdout);
+			fwrite(out + acc, nout, 1, stdout);
+			acc += nout;
 		}
 		if (feof(fp)) {
 			break;
@@ -33,10 +35,10 @@ enc (FILE *fp)
 		ret = 0;
 		goto out;
 	}
-	base64_stream_encode_final(&state, out, &nout);
+	base64_stream_encode_final(&state, out + acc, &nout);
 
 	if (nout) {
-		fwrite(out, nout, 1, stdout);
+		fwrite(out + acc, nout, 1, stdout);
 	}
 out:	fclose(fp);
 	fclose(stdout);
@@ -48,17 +50,19 @@ dec (FILE *fp)
 {
 	int ret = 1;
 	struct base64_state state;
+	size_t acc = 0;
 
 	base64_stream_decode_init(&state, 0);
 
 	while ((nread = fread(buf, 1, BUFSIZE, fp)) > 0) {
-		if (!base64_stream_decode(&state, buf, nread, out, &nout)) {
+		if (!base64_stream_decode(&state, buf, nread, out + acc, &nout)) {
 			fprintf(stderr, "decoding error\n");
 			ret = 0;
 			goto out;
 		}
 		if (nout) {
-			fwrite(out, nout, 1, stdout);
+			fwrite(out + acc, nout, 1, stdout);
+			acc += nout;
 		}
 		if (feof(fp)) {
 			break;
